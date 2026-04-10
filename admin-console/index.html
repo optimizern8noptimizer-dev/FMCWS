@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FMCWS — Admin Console</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #4f8ef7;
+      --accent2: #6c5ce7;
+      --text: #e8eaf0;
+      --text-dim: #8b91b0;
+      --red: #ff4757;
+      --orange: #ff9f43;
+      --yellow: #ffd32a;
+      --green: #2ed573;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .layout { display: flex; min-height: 100vh; }
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+    }
+    .sidebar-logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo h2 { font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+    .sidebar-logo p { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+    .nav { padding: 16px 8px; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-dim);
+      transition: all 0.15s; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(79,142,247,0.15); color: var(--accent); font-weight: 600; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-dim); }
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar {
+      height: 60px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 600; flex: 1; }
+    .api-form { display: flex; gap: 8px; }
+    .api-form input {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 12px; border-radius: 6px; font-size: 12px; width: 220px;
+    }
+    .api-form input:focus { outline: none; border-color: var(--accent); }
+    .btn {
+      padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #3a7be0; }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    /* Content */
+    .content { flex: 1; overflow-y: auto; padding: 24px; }
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .card-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .card-value { font-size: 32px; font-weight: 700; margin: 8px 0 4px; }
+    .card-sub { font-size: 12px; color: var(--text-dim); }
+    .card.red .card-value { color: var(--red); }
+    .card.orange .card-value { color: var(--orange); }
+    .card.yellow .card-value { color: var(--yellow); }
+    .card.blue .card-value { color: var(--accent); }
+    .card.green .card-value { color: var(--green); }
+    /* Table */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .table-header h3 { font-size: 14px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { font-size: 13px; padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    /* Badges */
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-critical { background: rgba(255,71,87,0.15); color: var(--red); }
+    .badge-high     { background: rgba(255,159,67,0.15); color: var(--orange); }
+    .badge-medium   { background: rgba(255,211,42,0.15); color: var(--yellow); }
+    .badge-low      { background: rgba(46,213,115,0.15); color: var(--green); }
+    .badge-new      { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .badge-open     { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .badge-reviewing{ background: rgba(255,159,67,0.15); color: var(--orange); }
+    .badge-resolved { background: rgba(46,213,115,0.15); color: var(--green); }
+    .badge-closed_fraud { background: rgba(255,71,87,0.15); color: var(--red); }
+    .badge-closed_legit { background: rgba(46,213,115,0.15); color: var(--green); }
+    /* Loading */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-dim); font-size: 14px; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Forms */
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 11px; color: var(--text-dim); }
+    .form-group select, .form-group input {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 10px; border-radius: 6px; font-size: 13px;
+    }
+    .form-group select:focus, .form-group input:focus { outline: none; border-color: var(--accent); }
+    /* Rules editor */
+    .rule-row { display: grid; grid-template-columns: 130px 1fr 140px 70px 60px 60px auto; gap: 8px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    .rule-row:last-child { border-bottom: none; }
+    .rule-code { font-family: monospace; font-size: 12px; color: var(--accent); }
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: 0.2s; }
+    .toggle input:checked + .toggle-slider { background: var(--green); }
+    .toggle-slider:before { content:''; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+    /* Empty */
+    .empty { padding: 48px; text-align: center; color: var(--text-dim); }
+    .error-banner { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--red); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ── API Client ──────────────────────────────────────────────────────────────
+function makeApi(base, key) {
+  const headers = { 'Content-Type': 'application/json', 'X-API-Key': key };
+  const req = (method, path, body) =>
+    fetch(base.replace(/\/$/, '') + path, {
+      method, headers, body: body ? JSON.stringify(body) : undefined,
+    }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+  return {
+    stats:        ()              => req('GET',   '/v1/stats'),
+    events:       (p='')         => req('GET',   '/v1/events' + p),
+    alerts:       (p='')         => req('GET',   '/v1/alerts' + p),
+    updateAlert:  (id, body)     => req('PATCH', `/v1/alerts/${id}`, body),
+    cases:        (p='')         => req('GET',   '/v1/cases' + p),
+    updateCase:   (id, body)     => req('PATCH', `/v1/cases/${id}`, body),
+    rules:        ()              => req('GET',   '/v1/rules'),
+    updateRule:   (id, body)     => req('PATCH', `/v1/rules/${id}`, body),
+    deleteRule:   (id)           => req('DELETE',`/v1/rules/${id}`),
+    createRule:   (body)         => req('POST',  '/v1/rules', body),
+    health:       ()             => req('GET',   '/health'),
+  };
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const Badge = ({ v }) => <span className={`badge badge-${v}`}>{v}</span>;
+const fmtDt = s => new Date(s).toLocaleString('ru-RU');
+const Spinner = () => <div className="loading"><div className="spinner"/>Загрузка...</div>;
+
+// ── Config screen ─────────────────────────────────────────────────────────────
+function ConfigScreen({ onConnect }) {
+  const [url, setUrl] = useState(localStorage.getItem('fmcws_url') || 'http://localhost:8000');
+  const [key, setKey] = useState(localStorage.getItem('fmcws_key') || 'demo-fmcws-api-key-change-in-prod');
+  const [err, setErr] = useState('');
+  const connect = async () => {
+    setErr('');
+    try {
+      await makeApi(url, key).health();
+      localStorage.setItem('fmcws_url', url);
+      localStorage.setItem('fmcws_key', key);
+      onConnect(url, key);
+    } catch(e) { setErr('Не удалось подключиться: ' + e.message); }
+  };
+  return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'var(--bg)'}}>
+      <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:40,width:440}}>
+        <h2 style={{marginBottom:6,color:'var(--accent)'}}>🛡 FMCWS Admin Console</h2>
+        <p style={{color:'var(--text-dim)',fontSize:13,marginBottom:28}}>Подключение к backend-серверу</p>
+        {err && <div className="error-banner">{err}</div>}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div className="form-group">
+            <label>URL Backend</label>
+            <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="http://localhost:8000"/>
+          </div>
+          <div className="form-group">
+            <label>API Key (X-API-Key)</label>
+            <input type="password" value={key} onChange={e=>setKey(e.target.value)} placeholder="demo-fmcws-api-key-change-in-prod"/>
+          </div>
+          <button className="btn btn-primary" onClick={connect} style={{marginTop:8}}>Подключиться</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function Dashboard({ api }) {
+  const [stats, setStats] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    Promise.all([api.stats(), api.alerts('?limit=10')])
+      .then(([s, a]) => { setStats(s); setAlerts(a); })
+      .finally(() => setLoading(false));
+  }, []);
+  if (loading) return <Spinner/>;
+  return (
+    <div>
+      <div className="cards">
+        <div className="card blue"><div className="card-label">Событий за 24ч</div><div className="card-value">{stats?.total_events_24h ?? 0}</div><div className="card-sub">все каналы</div></div>
+        <div className="card orange"><div className="card-label">Алертов за 24ч</div><div className="card-value">{stats?.total_alerts_24h ?? 0}</div><div className="card-sub">medium+</div></div>
+        <div className="card red"><div className="card-label">Критических</div><div className="card-value">{stats?.critical_alerts ?? 0}</div><div className="card-sub">за 24ч</div></div>
+        <div className="card yellow"><div className="card-label">Высоких</div><div className="card-value">{stats?.high_alerts ?? 0}</div><div className="card-sub">за 24ч</div></div>
+        <div className="card green"><div className="card-label">Открытых кейсов</div><div className="card-value">{stats?.open_cases ?? 0}</div><div className="card-sub">требуют обработки</div></div>
+      </div>
+      <div className="table-wrap">
+        <div className="table-header"><h3>Последние алерты</h3></div>
+        {alerts.length === 0 ? <div className="empty">Алертов пока нет</div> : (
+        <table>
+          <thead><tr><th>Уровень</th><th>Клиент</th><th>Score</th><th>Сработавшие правила</th><th>Статус</th><th>Время</th></tr></thead>
+          <tbody>
+            {alerts.map(a => (
+              <tr key={a.id}>
+                <td><Badge v={a.risk_level}/></td>
+                <td style={{fontFamily:'monospace',fontSize:12}}>{a.client_id?.slice(0,16)}…</td>
+                <td><strong>{a.risk_score}</strong></td>
+                <td style={{fontSize:12,color:'var(--text-dim)'}}>{(a.triggered_rules||[]).join(', ')}</td>
+                <td><Badge v={a.status}/></td>
+                <td style={{fontSize:12,color:'var(--text-dim)'}}>{fmtDt(a.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Alerts page ───────────────────────────────────────────────────────────────
+function AlertsPage({ api }) {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState({ status: '', risk_level: '' });
+
+  const load = useCallback(() => {
+    setLoading(true);
+    const p = new URLSearchParams();
+    if (filter.status) p.set('status', filter.status);
+    if (filter.risk_level) p.set('risk_level', filter.risk_level);
+    api.alerts('?' + p.toString()).then(setAlerts).finally(() => setLoading(false));
+  }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const upd = async (id, body) => {
+    await api.updateAlert(id, body);
+    load();
+  };
+
+  return (
+    <div>
+      <div className="table-wrap">
+        <div className="form-row">
+          <div className="form-group">
+            <label>Статус</label>
+            <select value={filter.status} onChange={e=>setFilter({...filter,status:e.target.value})}>
+              <option value="">Все</option>
+              <option value="new">Новый</option>
+              <option value="reviewing">На проверке</option>
+              <option value="resolved">Закрыт</option>
+              <option value="false_positive">Ложное</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Уровень</label>
+            <select value={filter.risk_level} onChange={e=>setFilter({...filter,risk_level:e.target.value})}>
+              <option value="">Все</option>
+              <option value="critical">Критический</option>
+              <option value="high">Высокий</option>
+              <option value="medium">Средний</option>
+              <option value="low">Низкий</option>
+            </select>
+          </div>
+          <button className="btn btn-ghost" onClick={load}>Обновить</button>
+        </div>
+        {loading ? <Spinner/> : alerts.length === 0 ? <div className="empty">Алертов не найдено</div> : (
+        <table>
+          <thead><tr><th>Уровень</th><th>Score</th><th>Клиент ID</th><th>Правила</th><th>Статус</th><th>Рекомендация</th><th>Время</th><th>Действие</th></tr></thead>
+          <tbody>
+            {alerts.map(a => (
+              <tr key={a.id}>
+                <td><Badge v={a.risk_level}/></td>
+                <td><strong>{a.risk_score}</strong></td>
+                <td style={{fontFamily:'monospace',fontSize:11}}>{a.client_id?.slice(0,20)}…</td>
+                <td style={{fontSize:11,color:'var(--text-dim)',maxWidth:200}}>{(a.triggered_rules||[]).join(', ')}</td>
+                <td><Badge v={a.status}/></td>
+                <td style={{fontSize:12}}>{a.recommendation || '—'}</td>
+                <td style={{fontSize:11,color:'var(--text-dim)',whiteSpace:'nowrap'}}>{fmtDt(a.created_at)}</td>
+                <td style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                  {a.status === 'new' && <>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>upd(a.id,{status:'reviewing'})}>→ Проверка</button>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>upd(a.id,{status:'false_positive'})}>Ложный</button>
+                  </>}
+                  {a.status === 'reviewing' && <button className="btn btn-ghost btn-sm" onClick={()=>upd(a.id,{status:'resolved'})}>Закрыть</button>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Cases page ────────────────────────────────────────────────────────────────
+function CasesPage({ api }) {
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  const load = useCallback(() => {
+    setLoading(true);
+    const p = filter ? `?status=${filter}` : '';
+    api.cases(p).then(setCases).finally(()=>setLoading(false));
+  }, [filter]);
+
+  useEffect(()=>{ load(); }, [load]);
+
+  const upd = async (id, body) => { await api.updateCase(id, body); load(); };
+
+  return (
+    <div className="table-wrap">
+      <div className="form-row">
+        <div className="form-group">
+          <label>Статус</label>
+          <select value={filter} onChange={e=>setFilter(e.target.value)}>
+            <option value="">Все</option>
+            <option value="open">Открыт</option>
+            <option value="investigating">Расследование</option>
+            <option value="closed_fraud">Мошенничество</option>
+            <option value="closed_legit">Легитимный</option>
+          </select>
+        </div>
+        <button className="btn btn-ghost" onClick={load}>Обновить</button>
+      </div>
+      {loading ? <Spinner/> : cases.length === 0 ? <div className="empty">Кейсов не найдено</div> : (
+      <table>
+        <thead><tr><th>№ Кейса</th><th>Клиент</th><th>Приоритет</th><th>Статус</th><th>Алертов</th><th>Аналитик</th><th>Создан</th><th>Действие</th></tr></thead>
+        <tbody>
+          {cases.map(c => (
+            <tr key={c.id}>
+              <td style={{fontFamily:'monospace',fontSize:12,color:'var(--accent)'}}>{c.case_number}</td>
+              <td style={{fontFamily:'monospace',fontSize:11}}>{c.client_id?.slice(0,16)}…</td>
+              <td><Badge v={c.priority}/></td>
+              <td><Badge v={c.status}/></td>
+              <td>{(c.alert_ids||[]).length}</td>
+              <td style={{fontSize:12,color:'var(--text-dim)'}}>{c.analyst_id || '—'}</td>
+              <td style={{fontSize:11,color:'var(--text-dim)',whiteSpace:'nowrap'}}>{fmtDt(c.created_at)}</td>
+              <td style={{display:'flex',gap:4}}>
+                {c.status === 'open' && <button className="btn btn-ghost btn-sm" onClick={()=>upd(c.id,{status:'investigating'})}>→ Расследование</button>}
+                {c.status === 'investigating' && <>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>upd(c.id,{status:'closed_fraud'})}>Мошенничество</button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>upd(c.id,{status:'closed_legit'})}>Легитимный</button>
+                </>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      )}
+    </div>
+  );
+}
+
+// ── Events log ────────────────────────────────────────────────────────────────
+function EventsPage({ api }) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  const load = () => {
+    setLoading(true);
+    const p = search ? `?client_id=${encodeURIComponent(search)}&limit=100` : '?limit=100';
+    api.events(p).then(setEvents).finally(()=>setLoading(false));
+  };
+  useEffect(()=>{ load(); }, []);
+
+  const channelIcon = c => ({web:'🌐',ios:'',android:'🤖',backend:'⚙️'}[c]||'?');
+
+  return (
+    <div className="table-wrap">
+      <div className="form-row">
+        <div className="form-group" style={{flex:1}}>
+          <label>Поиск по Client ID</label>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Введите client_id…" onKeyDown={e=>e.key==='Enter'&&load()}/>
+        </div>
+        <button className="btn btn-primary" onClick={load}>Найти</button>
+      </div>
+      {loading ? <Spinner/> : events.length === 0 ? <div className="empty">Событий не найдено</div> : (
+      <table>
+        <thead><tr><th>Канал</th><th>Тип события</th><th>Клиент ID</th><th>Score</th><th>Уровень</th><th>Правила</th><th>Время</th></tr></thead>
+        <tbody>
+          {events.map(e => (
+            <tr key={e.id}>
+              <td>{channelIcon(e.channel)} {e.channel}</td>
+              <td style={{fontFamily:'monospace',fontSize:12}}>{e.event_type}</td>
+              <td style={{fontFamily:'monospace',fontSize:11}}>{e.client_id?.slice(0,20)}…</td>
+              <td>{e.risk_score != null ? <strong>{e.risk_score}</strong> : '—'}</td>
+              <td>{e.risk_level ? <Badge v={e.risk_level}/> : '—'}</td>
+              <td style={{fontSize:11,color:'var(--text-dim)'}}>{(e.triggered_rules||[]).join(', ')||'—'}</td>
+              <td style={{fontSize:11,color:'var(--text-dim)',whiteSpace:'nowrap'}}>{fmtDt(e.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      )}
+    </div>
+  );
+}
+
+// ── Rules page ────────────────────────────────────────────────────────────────
+function RulesPage({ api }) {
+  const [rules, setRules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newRule, setNewRule] = useState({ code:'', name:'', event_type:'', score_delta:20, priority:50 });
+  const [showForm, setShowForm] = useState(false);
+
+  const load = () => { setLoading(true); api.rules().then(setRules).finally(()=>setLoading(false)); };
+  useEffect(()=>{ load(); }, []);
+
+  const toggle = async (rule) => {
+    await api.updateRule(rule.id, { is_active: !rule.is_active });
+    load();
+  };
+  const del = async (id) => {
+    if (!confirm('Удалить правило?')) return;
+    await api.deleteRule(id);
+    load();
+  };
+  const add = async () => {
+    if (!newRule.code || !newRule.name || !newRule.event_type) return alert('Заполните все обязательные поля');
+    await api.createRule({ ...newRule, score_delta: Number(newRule.score_delta), priority: Number(newRule.priority) });
+    setNewRule({ code:'', name:'', event_type:'', score_delta:20, priority:50 });
+    setShowForm(false);
+    load();
+  };
+
+  return (
+    <div className="table-wrap">
+      <div className="table-header">
+        <h3>Правила скоринга ({rules.length})</h3>
+        <button className="btn btn-primary btn-sm" onClick={()=>setShowForm(!showForm)}>+ Добавить правило</button>
+      </div>
+      {showForm && (
+        <div className="form-row" style={{background:'var(--surface2)',flexWrap:'wrap',gap:10}}>
+          {[['Код','code','monospace'],['Название','name',''],['Тип события','event_type','monospace']].map(([lbl,k,ff])=>(
+            <div className="form-group" key={k}>
+              <label>{lbl} *</label>
+              <input style={ff?{fontFamily:'monospace'}:{}} value={newRule[k]} onChange={e=>setNewRule({...newRule,[k]:e.target.value})} placeholder={lbl}/>
+            </div>
+          ))}
+          <div className="form-group">
+            <label>Δ Score</label>
+            <input type="number" value={newRule.score_delta} onChange={e=>setNewRule({...newRule,score_delta:e.target.value})} style={{width:70}}/>
+          </div>
+          <div className="form-group">
+            <label>Приоритет</label>
+            <input type="number" value={newRule.priority} onChange={e=>setNewRule({...newRule,priority:e.target.value})} style={{width:70}}/>
+          </div>
+          <div className="form-group" style={{justifyContent:'flex-end'}}>
+            <label>&nbsp;</label>
+            <button className="btn btn-primary" onClick={add}>Создать</button>
+          </div>
+        </div>
+      )}
+      {loading ? <Spinner/> : (
+        <>
+          <div style={{display:'grid',gridTemplateColumns:'130px 1fr 160px 70px 60px 60px auto',gap:8,padding:'8px 16px',borderBottom:'1px solid var(--border)'}}>
+            {['Код','Название','Тип события','Δ Score','Прио','Вкл','Удалить'].map(h=><span key={h} style={{fontSize:11,color:'var(--text-dim)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{h}</span>)}
+          </div>
+          {rules.map(r=>(
+            <div key={r.id} className="rule-row" style={{opacity:r.is_active?1:0.5}}>
+              <span className="rule-code">{r.code}</span>
+              <span style={{fontSize:13}}>{r.name}</span>
+              <span style={{fontFamily:'monospace',fontSize:12,color:'var(--text-dim)'}}>{r.event_type}</span>
+              <span style={{color: r.score_delta > 30 ? 'var(--red)' : r.score_delta > 15 ? 'var(--orange)' : 'var(--yellow)', fontWeight:700}}>+{r.score_delta}</span>
+              <span style={{fontSize:12,color:'var(--text-dim)'}}>{r.priority}</span>
+              <label className="toggle">
+                <input type="checkbox" checked={r.is_active} onChange={()=>toggle(r)}/>
+                <span className="toggle-slider"/>
+              </label>
+              <button className="btn btn-danger btn-sm" onClick={()=>del(r.id)}>✕</button>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+const PAGES = [
+  { id:'dashboard', icon:'📊', label:'Дашборд',    comp: Dashboard },
+  { id:'alerts',    icon:'🔔', label:'Алерты',     comp: AlertsPage },
+  { id:'cases',     icon:'📁', label:'Кейсы',      comp: CasesPage },
+  { id:'events',    icon:'📋', label:'События',    comp: EventsPage },
+  { id:'rules',     icon:'⚙️', label:'Правила',    comp: RulesPage },
+];
+
+function App() {
+  const [creds, setCreds] = useState(() => {
+    const url = localStorage.getItem('fmcws_url');
+    const key = localStorage.getItem('fmcws_key');
+    return (url && key) ? { url, key } : null;
+  });
+  const [page, setPage] = useState('dashboard');
+
+  if (!creds) return <ConfigScreen onConnect={(url,key)=>setCreds({url,key})}/>;
+
+  const api = makeApi(creds.url, creds.key);
+  const PageComp = PAGES.find(p=>p.id===page)?.comp || Dashboard;
+
+  return (
+    <div className="layout">
+      <div className="sidebar">
+        <div className="sidebar-logo">
+          <h2>🛡 FMCWS</h2>
+          <p>Fraud Monitoring Service</p>
+        </div>
+        <nav className="nav">
+          {PAGES.map(p=>(
+            <div key={p.id} className={`nav-item${page===p.id?' active':''}`} onClick={()=>setPage(p.id)}>
+              <span className="nav-icon">{p.icon}</span>{p.label}
+            </div>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          <div>{creds.url}</div>
+          <div style={{marginTop:4,cursor:'pointer',color:'var(--accent)'}} onClick={()=>{localStorage.clear();setCreds(null);}}>← Отключиться</div>
+        </div>
+      </div>
+      <div className="main">
+        <div className="topbar">
+          <h1>{PAGES.find(p=>p.id===page)?.label}</h1>
+        </div>
+        <div className="content">
+          <PageComp api={api}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>FMCWS Web SDK — Пример интеграции</title>
+  <!-- 1. Подключаем SDK -->
+  <script src="../fmcws-sdk.js"></script>
+</head>
+<body>
+<h2>Интернет-банкинг — тестовая страница</h2>
+
+<!-- Форма перевода с атрибутами автотрекинга -->
+<form data-fmcws-event="TRANSFER_CONFIRM" data-fmcws-amount="1500" data-fmcws-currency="BYN">
+  <input type="text" placeholder="Получатель"/>
+  <input type="number" placeholder="Сумма"/>
+  <button type="submit">Перевести</button>
+</form>
+
+<script>
+  // 2. Инициализация SDK
+  var fmcws = new FMCWS({
+    apiUrl:   'http://localhost:8000',
+    apiKey:   'demo-fmcws-api-key-change-in-prod',
+    clientId: 'ПСЕВДОНИМИЗИРОВАННЫЙ_ID_КЛИЕНТА',
+    debug:    true,
+    autoTrack: true,
+  });
+  fmcws.init();
+
+  // 3. Трекинг событий вручную
+  // После успешного логина:
+  // fmcws.identify('CLIENT_HASH_AFTER_LOGIN');
+  // fmcws.track('LOGIN_SUCCESS', { is_new_device: true });
+
+  // Добавление нового получателя:
+  // fmcws.track('RECIPIENT_ADD', { recipient_hash: 'abc123' });
+
+  // Изменение контактных данных:
+  // fmcws.track('CONTACT_CHANGE', { field: 'phone' });
+
+  // Перевод крупной суммы:
+  // fmcws.track('TRANSFER_CREATE', { amount: 15000, currency: 'BYN' });
+
+  // Смена IP (если backend определяет и сообщает):
+  // fmcws.track('IP_CHANGE', { new_ip_hint: '*.*.*.changed' });
+
+  // Запрос OTP:
+  // fmcws.track('OTP_REQUEST');
+
+  // Выход:
+  // fmcws.reset();
+</script>
+</body>
+</html>

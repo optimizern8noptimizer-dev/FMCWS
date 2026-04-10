@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  fmcws-api:
+    build: ./backend
+    container_name: fmcws-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - fmcws-data:/app/data
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:////app/data/fmcws.db
+      API_KEY: demo-fmcws-api-key-change-in-prod
+      SECRET_KEY: fmcws-secret-change-in-production-32chars
+      DEBUG: "false"
+      BANK_WEBHOOK_URL: ""
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  fmcws-data:
